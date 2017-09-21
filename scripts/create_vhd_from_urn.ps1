@@ -14,6 +14,7 @@
     [Parameter(Mandatory=$false)] [string] $NSG = "SmokeNSG",
 
     [Parameter(Mandatory=$false)] [string] $suffix = "-Smoke-1",
+    [Parameter(Mandatory=$false)] [string] $logDir = "Log-Category",
     [Parameter(Mandatory=$false)] [string] $VMFlavor="standard_d2_v2"
 )
 
