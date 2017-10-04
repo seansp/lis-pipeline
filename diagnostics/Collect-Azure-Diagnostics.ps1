@@ -1,14 +1,21 @@
 ﻿. .\Utilities.ps1
 
 
+$disable_name_filter = $true
+$disable_file_filter = $false
+
 # Collect up the storage accounts.
 $accounts = Get-AzureRmStorageAccount
 
 $numberAccounts = $accounts.Length 
 Message "Total of $numberAccounts Accounts."
+
+$found_files = @{}
+
+
 foreach( $storageAccount in $accounts | Sort-Object Location, CreationTime, StorageAccountName )
 {
-  $include = $false;
+  $include = $disable_name_filter
 
   switch -Wildcard ( $storageAccount.ResourceGroupName.ToLower() )
   {
@@ -25,21 +32,58 @@ foreach( $storageAccount in $accounts | Sort-Object Location, CreationTime, Stor
 
   if( $include -eq $true )
     {
-
       $name = $storageAccount.StorageAccountName
       $resourceGroup = $storageAccount.ResourceGroupName
       $location = $storageAccount.Location
       $creationDate = $storageAccount.CreationTime
-
-      Message "$creationDate | $location | $resourceGroup | $name"
-      
+      Message "$creationDate | $location | $resourceGroup | $name"   
       $key1 = (Get-AzureRmStorageAccountKey -ResourceGroupName $storageAccount.ResourceGroupName -name $storageAccount.StorageAccountName)[0].value
       $storageContext = New-AzureStorageContext -StorageAccountName $storageAccount.StorageAccountName -StorageAccountKey $key1
       $storageContainer = Get-AzureStorageContainer -Context $storageContext
-
+      $containers = @()
+      #Sometimes there is just one container.  Sometimes an array.
+      if( !($storageContainer -is [system.array]) )
+      {
+        $containers += $storageContainer
+      }
+      else {
+        $containers = $storageContainer
+      }
+      foreach( $container in $containers )
+      {
+        $containerFilter = $true
+        switch -Wildcard ( $container.Name.ToLower() ) 
+        {
+          "*bootdiagnostics*" { $containerFilter = $false }
+        }
+        if( $containerFilter -eq $true )
+        {
+            Message $container.Name
+            $containerName = $container.Name
+            $files = @()
+            foreach( $blob in Get-AzureStorageBlob -Container $container.Name -Context $storageContext )
+            {
+              $fileFilter = $disable_file_filter
+              switch -Wildcard ( $blob.Name.ToLower() )
+              {
+                "*.iso" { $fileFilter = $true }
+                "*.vhd" { $fileFilter = $true }
+                "*.vdhx" { $fileFilter = $true }
+                "*.wim" { $fileFilter = $true }
+              }
+              if( $fileFilter -eq $true )
+              {
+                Message $blob.Name
+                $files += $blob.Name 
+              }
+            }
+            $found_files.Add(  $name + "." + $resourceGroup + "." + $location + "\\" + $containerName, $files )
+        }
+      }
   }
 }
 
+ConvertTo-Json -InputObject $found_files
 
 
 
