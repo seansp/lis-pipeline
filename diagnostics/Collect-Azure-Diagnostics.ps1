@@ -12,6 +12,7 @@ Message "Total of $numberAccounts Accounts."
 
 $found_files = @{}
 
+$currentAccount = 1
 
 foreach( $storageAccount in $accounts | Sort-Object Location, CreationTime, StorageAccountName )
 {
@@ -30,9 +31,12 @@ foreach( $storageAccount in $accounts | Sort-Object Location, CreationTime, Stor
     "*my*" { $include = $true }
   }
 
+  $name = $storageAccount.StorageAccountName
+  Alert " $name -- $currentAccount / $numberAccounts"
+  $currentAccount = $currentAccount + 1
+  
   if( $include -eq $true )
     {
-      $name = $storageAccount.StorageAccountName
       $resourceGroup = $storageAccount.ResourceGroupName
       $location = $storageAccount.Location
       $creationDate = $storageAccount.CreationTime
@@ -83,7 +87,7 @@ foreach( $storageAccount in $accounts | Sort-Object Location, CreationTime, Stor
   }
 }
 
-ConvertTo-Json -InputObject $found_files
+ConvertTo-Json -InputObject $found_files > diag-files.json
 
 
 
