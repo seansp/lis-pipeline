@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>az-ps</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>if redis-cli -h redis exists azureApplication
+then
+  az login -u $(redis-cli -h redis get azureApplication) --service-principal --tenant $(redis-cli -h redis get azureTenant) --password $(redis-cli -h redis get azurePassword)
+  az vm image list --location westus --all --publisher Canonical --sku 16.04-DAILY-LTS -o tsv &gt; canonical_1604daily_list.txt
+  tail -n 1 canonical_1604daily_list.txt &gt; last_canonical_1604.txt
+  if $(redis-cli -h redis exists $(cut -f 4 last_canonical_1604.txt)) == 1
+  then 
+    echo &quot;We already have this one.&quot;
+  else
+    echo &quot;We gots work to do.&quot;
+    redis-cli -h redis set $(cut -f 4 last_canonical_1604.txt) &quot;Building...$(date)&quot;
+    az group create -n westfalia-westus -l westus
+    MACHINE_NAME=$(cut -f 2 last_canonical_1604.txt).$(cut -f 3 last_canonical_1604.txt).$(cut -f 5 last_canonical_1604.txt)
+    az vm create -g westfalia-westus -n ${MACHINE_NAME} --image $(cut -f 4 last_canonical_1604.txt) --admin-user $(redis-cli -h redis get admin-user) --admin-password $(redis-cli -h redis get admin-pwd) 
+    # Get public IP address for the VM
+    IP_ADDRESS=$(az vm list-ip-addresses -g westfalia-westus -n ${MACHINE_NAME} --query &quot;[0].virtualMachine.network.publicIpAddresses[0].ipAddress&quot; -o tsv)
+    echo &quot;You can now connect using &apos;ssh deploy@${IP_ADDRESS}&apos;&quot;
+    redis-cli -h redis set $(cut -f 4 last_canonical_1604.txt) ${IP_ADDRESS}
+  fi
+else
+  echo &quot;No Hello&quot;
+fi</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
