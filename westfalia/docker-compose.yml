@@ -8,11 +8,11 @@ services:
 #      - "80:5000"
 #    volumes:
 #      - ./web:/code
-  jenkins-configure:
-    build: ./jenkins-configure
-    links:
-      - jenkins
-      - redis
+#  jenkins-configure:
+#    build: ./jenkins-configure
+#    links:
+#      - jenkins
+#      - redis
   jenkins:
     build: ./jenkins
     ports:
