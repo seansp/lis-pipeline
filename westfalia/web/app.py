@@ -1,7 +1,7 @@
 from flask import Flask
 from redis import Redis
 
-app = Flash(__name__)
+app = Flask(__name__)
 redis = Redis(host='redis', port=6379)
 
 @app.route('/')

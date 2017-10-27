@@ -1,18 +1,18 @@
 version: '2'
 services:
-#  web:
-#    build: ./web
-#    links:
-#      - redis
-#    ports:
-#      - "80:5000"
-#    volumes:
-#      - ./web:/code
-#  jenkins-configure:
-#    build: ./jenkins-configure
-#    links:
-#      - jenkins
-#      - redis
+  web:
+    build: ./web
+    links:
+      - redis
+    ports:
+      - "80:5000"
+    volumes:
+      - ./web:/code
+  config:
+    build: ./config
+    links:
+      - jenkins
+      - redis
   jenkins:
     build: ./jenkins
     ports:
