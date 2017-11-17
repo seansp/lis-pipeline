@@ -21,7 +21,7 @@ RUN apt-get -y update && apt-get install -y azure-cli
 RUN apt-get -y install redis-tools
 
 # Jenkins plugin for powershell doesn't appear to be configurable.  Attempts to execute 'powershell.exe'
-RUN ln /usr/bin/powershell /usr/bin/powershell.exe
+RUN ln /usr/bin/pwsh /usr/bin/powershell.exe
 
 # Connect to jenkins.
 CMD java -jar swarm-client-2.2-jar-with-dependencies.jar -master http://jenkins:8080 -name az-client -labels az-ps -executors 2
